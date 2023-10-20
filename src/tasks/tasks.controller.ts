@@ -3,55 +3,49 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
-  Patch,
   Post,
   Put,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './task.entity';
 
 @Controller('tasks')
 export class TasksController {
-  constructor(private taskService: TasksService) {}
+  constructor(private readonly taskService: TasksService) {}
 
   @Get()
-  findAll(): Promise<Task[]> {
+  async findAll(): Promise<Task[]> {
     return this.taskService.findAll();
   }
 
   @Get(':id')
-  findById(@Param('id') id: string): Promise<Task> {
-    return this.taskService.findById(id);
+  async findById(@Param('id') id: string): Promise<Task> {
+    const task = await this.taskService.findById(id);
+    if (!task) throw new NotFoundException();
+    return task;
   }
 
   @Post()
-  create(@Body() createTaskDto: CreateTaskDto): Promise<Task> {
+  async create(@Body() createTaskDto: CreateTaskDto): Promise<Task> {
     return this.taskService.create(createTaskDto);
   }
 
-  @Patch(':id/status')
-  updateStatus(
-    @Param('id') id: string,
-    @Body() updateTaskStatusDto: UpdateTaskStatusDto,
-  ): Promise<Task> {
-    const { status } = updateTaskStatusDto;
-    return this.taskService.updateStatus(id, status);
-  }
-
   @Put(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateTaskDto: UpdateTaskDto,
   ): Promise<Task> {
+    await this.findById(id);
     return this.taskService.update(id, updateTaskDto);
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string): void {
-    this.taskService.delete(id);
+  async delete(@Param('id') id: string): Promise<void> {
+    await this.findById(id);
+    return this.taskService.delete(id);
   }
 }

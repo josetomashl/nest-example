@@ -3,10 +3,13 @@ import { TasksModule } from './tasks/tasks.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Task } from './tasks/task.entity';
+import { AuthModule } from './auth/auth.module';
+import { User } from './auth/user.entity';
+import { jwtConstants } from './constants';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
-    TasksModule,
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
@@ -14,10 +17,17 @@ import { Task } from './tasks/task.entity';
       username: 'root',
       password: 'root',
       database: 'nestexample',
-      entities: [Task],
+      entities: [Task, User],
       synchronize: true,
       autoLoadEntities: true,
     }),
+    JwtModule.register({
+      global: true,
+      secret: jwtConstants.secret,
+      signOptions: { expiresIn: '3600s' },
+    }),
+    AuthModule,
+    TasksModule,
   ],
   controllers: [],
   providers: [],
